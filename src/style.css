@@ -1,0 +1,59 @@
+body {
+  background: #696969;
+}
+
+#container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+}
+
+#snake-game {
+  width: 25em;
+  height: 25em;
+  border: 0.1em solid white;
+}
+
+.btn {
+  background-color: #EA4C89;
+  border-radius: 8px;
+  border-style: none;
+  box-sizing: border-box;
+  color: #FFFFFF;
+  cursor: pointer;
+  display: inline-block;
+  font-family: "Haas Grot Text R Web", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  height: 40px;
+  line-height: 20px;
+  list-style: none;
+  margin: 0;
+  outline: none;
+  padding: 10px 16px;
+  position: relative;
+  text-align: center;
+  text-decoration: none;
+  transition: color 100ms;
+  vertical-align: baseline;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  margin-top: 5em;
+}
+
+#start:hover,
+#start:focus, 
+#stop:hover,
+#stop:focus {
+  background-color: #F082AC;
+}
+
+@media (max-width: 940px), (max-height: 530px) {
+  #snake-game {
+    transform: scale(0.7);
+  }
+}
