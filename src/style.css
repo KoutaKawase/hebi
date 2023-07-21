@@ -12,8 +12,8 @@ body {
 }
 
 #snake-game {
-  width: 25em;
-  height: 25em;
+  width: 30em;
+  height: 30em;
   border: 0.1em solid white;
 }
 
@@ -54,6 +54,6 @@ body {
 
 @media (max-width: 940px), (max-height: 530px) {
   #snake-game {
-    transform: scale(0.7);
+    transform: scale(0.5);
   }
 }

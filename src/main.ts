@@ -3,15 +3,15 @@ interface Point {
 	y: number;
 }
 
+type Direction = "up" | "down" | "right" | "left";
+
 interface Renderble {
 	render: (ctx: CanvasRenderingContext2D) => void;
 }
 
 interface Sprite {
-	parts: SpritePart[];
+	parts: Point[];
 }
-
-interface SpritePart extends Point {}
 
 interface Food extends Sprite, Renderble {
 	color: string;
@@ -21,6 +21,7 @@ interface Snake extends Sprite, Renderble {
 	isHead: (index: number) => boolean;
 	headColor: string;
 	bodyColor: string;
+	direction: Direction;
 }
 
 interface Game {
@@ -29,17 +30,36 @@ interface Game {
 	stopBtn: HTMLButtonElement;
 }
 
+function handleKeyDown(e: KeyboardEvent) {
+	const direction = snake.direction;
+	switch (e.key) {
+		case "w":
+			if (direction !== "down") snake.direction = "up";
+			break;
+		case "s":
+			if (direction !== "up") snake.direction = "down";
+			break;
+		case "a":
+			if (direction !== "right") snake.direction = "left";
+			break;
+		case "d":
+			if (direction !== "left") snake.direction = "right";
+			break;
+	}
+}
+
 function start() {
 	if (!game.isRunning) {
 		game = { ...game, isRunning: true };
-		rafId = requestAnimationFrame(() => update(ctx));
+		intervalId = setInterval(() => update(ctx), tick);
+		window.addEventListener("keydown", (e) => handleKeyDown(e));
 		console.log("game start");
 	}
 }
 
 function stop() {
 	if (game.isRunning) {
-		cancelAnimationFrame(rafId);
+		clearInterval(intervalId);
 		game = { ...game, isRunning: false };
 		console.log("game stop");
 	}
@@ -47,14 +67,33 @@ function stop() {
 
 function update(ctx: CanvasRenderingContext2D) {
 	ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+
+	const head = { ...snake.parts[0] };
+
+	switch (snake.direction) {
+		case "up":
+			head.y -= 1;
+			break;
+		case "down":
+			head.y += 1;
+			break;
+		case "left":
+			head.x -= 1;
+			break;
+		case "right":
+			head.x += 1;
+			break;
+	}
+
+	snake.parts.unshift(head);
+	snake.parts.pop();
+
 	food.render(ctx);
 	snake.render(ctx);
-
-	rafId = requestAnimationFrame(() => update(ctx));
 }
 
 function draw(
-	part: SpritePart,
+	part: Point,
 	ctx: CanvasRenderingContext2D,
 	color: string,
 	blockSize = BLOCK_SIZE,
@@ -67,15 +106,18 @@ function draw(
 }
 
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
-const ctx = canvas.getContext("2d")!;
-const CANVAS_SIZE = document.getElementById("snake-game")?.clientWidth!;
+const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
+const CANVAS_SIZE = document.getElementById("snake-game")?.clientWidth as number;
 const BLOCK_SIZE = 10;
-let rafId = 0;
+const fps = 15;
+// fpsは1秒間に処理する回数なので 1s = 1000ms => 1000 / fps
+const tick = 1000 / fps;
+let intervalId = 0;
 
 let game: Game = {
 	isRunning: false,
-	startBtn: document.getElementById("start")! as HTMLButtonElement,
-	stopBtn: document.getElementById("stop")! as HTMLButtonElement,
+	startBtn: document.getElementById("start") as HTMLButtonElement,
+	stopBtn: document.getElementById("stop") as HTMLButtonElement,
 };
 
 const food: Food = {
@@ -100,6 +142,7 @@ const snake: Snake = {
 	isHead: (index) => index === 0,
 	headColor: "red",
 	bodyColor: "white",
+	direction: "right",
 	render: (ctx) => {
 		snake.parts.forEach((part, index) => {
 			snake.isHead(index)
