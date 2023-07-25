@@ -1,3 +1,8 @@
+:root {
+  --game-width: 30em;
+  --game-height: 30em;
+}
+
 body {
   background: #696969;
 }
@@ -12,9 +17,18 @@ body {
 }
 
 #snake-game {
-  width: 30em;
-  height: 30em;
+  width: var(--game-width);
+  height: var(--game-height);
   border: 0.1em solid white;
+}
+
+#score-text {
+  width: var(--game-width);
+  margin-bottom: 0.5em;
+  color: white;
+}
+
+#score-point {
 }
 
 .btn {
@@ -42,7 +56,7 @@ body {
   user-select: none;
   -webkit-user-select: none;
   touch-action: manipulation;
-  margin-top: 5em;
+  margin-top: 2em;
 }
 
 #start:hover,

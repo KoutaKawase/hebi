@@ -1,3 +1,5 @@
+import "the-new-css-reset/css/reset.css";
+
 interface Point {
 	x: number;
 	y: number;
@@ -26,8 +28,10 @@ interface Snake extends Sprite, Renderble {
 
 interface Game {
 	isRunning: boolean;
+	score: number;
 	startBtn: HTMLButtonElement;
 	stopBtn: HTMLButtonElement;
+	scoreElem: HTMLParagraphElement;
 }
 
 function handleKeyDown(e: KeyboardEvent) {
@@ -51,7 +55,7 @@ function handleKeyDown(e: KeyboardEvent) {
 function start() {
 	if (!game.isRunning) {
 		game = { ...game, isRunning: true };
-		intervalId = setInterval(() => update(ctx), tick);
+		intervalId = setInterval(() => update(), tick);
 		window.addEventListener("keydown", (e) => handleKeyDown(e));
 		console.log("game start");
 	}
@@ -65,28 +69,71 @@ function stop() {
 	}
 }
 
-function update(ctx: CanvasRenderingContext2D) {
-	ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+function moveSnake(snake: Point[], direction: Direction): Point[] {
+	const snakeHead = { ...snake[0] };
 
-	const head = { ...snake.parts[0] };
-
-	switch (snake.direction) {
+	switch (direction) {
 		case "up":
-			head.y -= 1;
+			snakeHead.y -= 1;
 			break;
 		case "down":
-			head.y += 1;
+			snakeHead.y += 1;
 			break;
 		case "left":
-			head.x -= 1;
+			snakeHead.x -= 1;
 			break;
 		case "right":
-			head.x += 1;
+			snakeHead.x += 1;
 			break;
 	}
 
-	snake.parts.unshift(head);
-	snake.parts.pop();
+	const copied = [...snake];
+	copied.unshift(snakeHead);
+	copied.pop();
+	return copied;
+}
+
+function hasWallCollision(head: Point): boolean {
+	const { x, y } = head;
+	const WALL_MAX = CANVAS_SIZE / BLOCK_SIZE;
+
+	return x < 0 || x >= WALL_MAX || y < 0 || y >= WALL_MAX;
+}
+
+// スネークの頭が自身のボディと接触したかどうか
+function hasSnakeBodyCollision(snake: Point[]): boolean {
+	const head = snake[0];
+	const bodyParts = snake.slice(1);
+	return bodyParts.some((body) => head.x === body.x && head.y === body.y);
+}
+
+function isFoodEaten(head: Point, food: Point): boolean {
+	return head.x === food.x && head.y === food.y;
+}
+
+function boostSnakeGrowth(snake: Point[]): Point[] {
+	const copiedLast = snake.at(-1) as Point;
+	// 毎フレームごとに一番最後がpopされて蛇が進むので最後と同じボディをコピーして２つ用意することで消えるはずだった最後尾が片方だけ
+	// 消えて増えたような表現にできる
+	return [...snake, copiedLast];
+}
+
+function update() {
+	ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+
+	snake.parts = moveSnake(snake.parts, snake.direction);
+
+	if (isFoodEaten(snake.parts[0], food.parts[0])) {
+		snake.parts = boostSnakeGrowth(snake.parts);
+		food.parts[0] = createRandomFoodPoint();
+
+		const score = game.score + 100;
+		game = { ...game, score };
+		game.scoreElem.textContent = `${game.score}点`;
+	}
+
+	if (hasWallCollision(snake.parts[0]) || hasSnakeBodyCollision(snake.parts))
+		stop();
 
 	food.render(ctx);
 	snake.render(ctx);
@@ -105,9 +152,17 @@ function draw(
 	ctx.fillRect(x, y, blockSize, blockSize);
 }
 
+function createRandomFoodPoint(): Point {
+	return {
+		x: Math.floor(Math.random() * (CANVAS_SIZE / BLOCK_SIZE)),
+		y: Math.floor(Math.random() * (CANVAS_SIZE / BLOCK_SIZE)),
+	};
+}
+
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
-const CANVAS_SIZE = document.getElementById("snake-game")?.clientWidth as number;
+const CANVAS_SIZE = document.getElementById("snake-game")
+	?.clientWidth as number;
 const BLOCK_SIZE = 10;
 const fps = 15;
 // fpsは1秒間に処理する回数なので 1s = 1000ms => 1000 / fps
@@ -116,17 +171,14 @@ let intervalId = 0;
 
 let game: Game = {
 	isRunning: false,
+	score: 0,
 	startBtn: document.getElementById("start") as HTMLButtonElement,
 	stopBtn: document.getElementById("stop") as HTMLButtonElement,
+	scoreElem: document.getElementById("score-point") as HTMLParagraphElement,
 };
 
 const food: Food = {
-	parts: [
-		{
-			x: Math.floor(Math.random() * (CANVAS_SIZE / BLOCK_SIZE)),
-			y: Math.floor(Math.random() * (CANVAS_SIZE / BLOCK_SIZE)),
-		},
-	],
+	parts: [createRandomFoodPoint()],
 	color: "orange",
 	render: (ctx) => {
 		food.parts.forEach((part) => draw(part, ctx, food.color));
@@ -135,6 +187,7 @@ const food: Food = {
 
 const snake: Snake = {
 	parts: [
+		{ x: 3, y: 0 },
 		{ x: 2, y: 0 },
 		{ x: 1, y: 0 },
 		{ x: 0, y: 0 },
@@ -158,5 +211,6 @@ canvas.height = CANVAS_SIZE;
 food.render(ctx);
 snake.render(ctx);
 
+game.scoreElem.textContent = `${game.score}点`;
 game.startBtn.addEventListener("click", () => start());
 game.stopBtn.addEventListener("click", () => stop());
