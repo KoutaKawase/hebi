@@ -32,6 +32,7 @@ interface Game {
 	startBtn: HTMLButtonElement;
 	stopBtn: HTMLButtonElement;
 	scoreElem: HTMLParagraphElement;
+	renderScore: (elem: HTMLParagraphElement, score: number) => void;
 }
 
 function handleKeyDown(e: KeyboardEvent) {
@@ -127,9 +128,8 @@ function update() {
 		snake.parts = boostSnakeGrowth(snake.parts);
 		food.parts[0] = createRandomFoodPoint();
 
-		const score = game.score + 100;
-		game = { ...game, score };
-		game.scoreElem.textContent = `${game.score}点`;
+		game = { ...game, score: game.score + SUCCESSFUL_POINT };
+		game.renderScore(game.scoreElem, game.score);
 	}
 
 	if (hasWallCollision(snake.parts[0]) || hasSnakeBodyCollision(snake.parts))
@@ -164,6 +164,7 @@ const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
 const CANVAS_SIZE = document.getElementById("snake-game")
 	?.clientWidth as number;
 const BLOCK_SIZE = 10;
+const SUCCESSFUL_POINT = 100;
 const fps = 15;
 // fpsは1秒間に処理する回数なので 1s = 1000ms => 1000 / fps
 const tick = 1000 / fps;
@@ -175,6 +176,7 @@ let game: Game = {
 	startBtn: document.getElementById("start") as HTMLButtonElement,
 	stopBtn: document.getElementById("stop") as HTMLButtonElement,
 	scoreElem: document.getElementById("score-point") as HTMLParagraphElement,
+	renderScore: (elem, score) => (elem.textContent = `${score}点`),
 };
 
 const food: Food = {
@@ -211,6 +213,6 @@ canvas.height = CANVAS_SIZE;
 food.render(ctx);
 snake.render(ctx);
 
-game.scoreElem.textContent = `${game.score}点`;
+game.renderScore(game.scoreElem, game.score);
 game.startBtn.addEventListener("click", () => start());
 game.stopBtn.addEventListener("click", () => stop());
